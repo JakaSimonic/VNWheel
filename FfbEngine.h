@@ -22,68 +22,56 @@
 #ifndef FFBENGINE_h
 #define FFBENGINE_h
 
-#include <Arduino.h>
 #include "HIDReportType.h"
 #include "FfbReportHandler.h"
-#include "encoder.h"
 #include "wheelConfig.h"
-#include <filters.h>
+#include "UserInput.h"
+// #include <filters.h>
 
-#define WHEEL_SAMPLE_RATE_MS     10
-#define WHEEL_RANGE             0x03B7
+#define WHEEL_SAMPLE_RATE_MS 10
+#define WHEEL_RANGE 0x03B7
 
 #ifndef PI
-#define PI                      (float)3.14159265359 //consider using library defined value of PI
+#define PI (float)3.14159265359 // consider using library defined value of PI
 #endif
 #ifndef DEG_TO_RAD
-#define DEG_TO_RAD              ((float)(PI/180))
+#define DEG_TO_RAD ((float)(PI / 180))
 #endif
-#define NORMALIZE_RANGE(x)     ((int32_t)((x*255)/WHEEL_RANGE))
+#define NORMALIZE_RANGE(x) ((int32_t)((x * 255) / WHEEL_RANGE))
 
-class FfbEngine {
-  public:
-    FfbEngine();
-    ~FfbEngine();
-    void SetFfb(FfbReportHandler* reporthandler);
-    void SetGain(WheelConfig wheelconfig);
-    FfbReportHandler* ffbReportHandler;
-    
-    //
-    //    float FfbCos(float angle);
-    //    float FfbSin(float angle);
+class FfbEngine
+{
+public:
+  FfbEngine(FfbReportHandler *reporthandler, uint64_t (*)(void));
+  ~FfbEngine();
+  void SetGain(WheelConfig wheelconfig);
+  FfbReportHandler *ffbReportHandler;
 
+  void ForceCalculator(int32_t[NUM_AXES]);
+  float ConstantForceCalculator(const TEffectState &effect, int32_t elapsedTime);
+  float RampForceCalculator(const TEffectState &effect, int32_t elapsedTime);
+  void ConditionForceCalculator(const TEffectState &effect, const int32_t metric[NUM_AXES], float outForce[NUM_AXES]);
+  float PeriodiceForceCalculator(uint8_t effectType, const TEffectState &effect, int32_t elapsedTime);
+  float GetEnvelope(const USB_FFBReport_SetEnvelope_Output_Data_t &effect, uint32_t elapsedTime, uint16_t duration);
+  bool IsEffectPlaying(const TEffectState &effect, uint64_t time);
 
-    //    void ApplyDirection(volatile TEffectState&  effect, int32_t force, int32_t* axes);
-    //    void CalcCondition(volatile TEffectState&  effect, int32_t * outValue, int32_t* inValue);
-    //    void FfbGetFeedbackValue(int16_t* axisPosition, int16_t* out);
+  UserInput axisPosition;
 
-    int32_t ForceCalculator(Encoder encoder);
-    int32_t ConstantForceCalculator(volatile TEffectState&  effect);
-    int32_t RampForceCalculator(volatile TEffectState&  effect);
-    int32_t SquareForceCalculator(volatile TEffectState&  effect);
-    int32_t SinForceCalculator(volatile TEffectState&  effect);
-    int32_t TriangleForceCalculator(volatile TEffectState&  effect);
-    int32_t SawtoothDownForceCalculator(volatile TEffectState&  effect);
-    int32_t SawtoothUpForceCalculator(volatile TEffectState&  effect);
-    int32_t ConditionForceCalculator(volatile TEffectState&  effect, float metric);
+private:
+  uint64_t (*getTimeMilli)(void);
 
-    int32_t ApplyGain(uint8_t value, uint8_t gain);
-    int32_t ApplyEnvelope(volatile TEffectState&  effect, int32_t value);
-    float NormalizeRange(int32_t x, int32_t maxValue);
-  private:
-    uint8_t constantGainConfig;
-    uint8_t rampGainConfig;
-    uint8_t squareGainConfig;
-    uint8_t sinGainConfig;
-    uint8_t triangleGainConfig;
-    uint8_t sawToothDownGainConfig;
-    uint8_t sawToothUpGainConfig;
-    uint8_t springGainConfig;
-    uint8_t damperGainConfig;
-    uint8_t inertiaGainConfig;
-    uint8_t frictionGainConfig;
-    uint8_t totalGainConfig;
+  uint8_t constantGainConfig;
+  uint8_t rampGainConfig;
+  uint8_t squareGainConfig;
+  uint8_t sinGainConfig;
+  uint8_t triangleGainConfig;
+  uint8_t sawToothDownGainConfig;
+  uint8_t sawToothUpGainConfig;
+  uint8_t springGainConfig;
+  uint8_t damperGainConfig;
+  uint8_t inertiaGainConfig;
+  uint8_t frictionGainConfig;
+  uint8_t totalGainConfig;
 };
-
 
 #endif

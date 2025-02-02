@@ -49,6 +49,11 @@ vTEffectState *FfbReportHandler::GetEffect(uint8_t id)
   return nullptr;
 }
 
+const TEffectState *FfbReportHandler::GetEffectStates()
+{
+  return (const TEffectState *)gEffectStates;
+}
+
 uint8_t FfbReportHandler::GetNextFreeEffect(void)
 {
   for (int id = 0; id < MAX_EFFECTS; ++id)
@@ -71,8 +76,10 @@ void FfbReportHandler::StopAllEffects(void)
 void FfbReportHandler::StartEffect(vTEffectState *effectState)
 {
   effectState->state = MEFFECTSTATE_PLAYING;
-  effectState->elapsedTime = 0;
-  effectState->startTime = getTimeMilli();
+  if (effectState->block.triggerButton != 0xFF)
+    effectState->startTime = 0;
+  else
+    effectState->startTime = getTimeMilli() + effectState->block.startDelay;
 }
 
 void FfbReportHandler::StopEffect(vTEffectState *effectState)
@@ -185,7 +192,7 @@ void FfbReportHandler::FfbHandle_DeviceControl(USB_FFBReport_DeviceControl_Outpu
 }
 void FfbReportHandler::FfbHandle_DeviceGain(USB_FFBReport_DeviceGain_Output_Data_t *data)
 {
-  deviceGain = data->gain / 255;
+  deviceGain = data->gain;
 }
 
 void FfbReportHandler::FfbHandle_SetCustomForce(USB_FFBReport_SetCustomForce_Output_Data_t *data)
@@ -206,13 +213,18 @@ void FfbReportHandler::FfbHandle_SetEffect(USB_FFBReport_SetEffect_Output_Data_t
   volatile USB_FFBReport_SetEffect_Output_Data_t *block = &effectState->block;
   memcpy((void *)block, data, sizeof(USB_FFBReport_SetEffect_Output_Data_t));
 
+  float normalizedDirectionX = data->directionX / USB_NORMALIZE_RAD;
+  float normalizedDirectionY = data->directionY / USB_NORMALIZE_RAD;
   uint8_t enableAxis = data->enableAxis;
   if (enableAxis & DIRECTION_ENABLE)
   {
-    float normalizedDirectionX = data->directionX / NORMALIZE_DIRECTION;
-    float normalizedDirectionY = data->directionY / NORMALIZE_DIRECTION;
     effectState->directionUnitVec[0] = cos(normalizedDirectionX);
     effectState->directionUnitVec[1] = sin(normalizedDirectionX);
+  }
+  else
+  {
+    effectState->directionUnitVec[0] = cos(normalizedDirectionX);
+    effectState->directionUnitVec[1] = sin(normalizedDirectionY);
   }
 }
 

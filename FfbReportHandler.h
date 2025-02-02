@@ -32,25 +32,23 @@
 typedef volatile TEffectState vTEffectState;
 class FfbReportHandler
 {
-
-  vTEffectState gEffectStates[MAX_EFFECTS];
-
 public:
   FfbReportHandler(uint64_t (*)(void));
   ~FfbReportHandler();
-  // Effect management
+
+  uint8_t *FfbOnPIDPool();
+  uint8_t *FfbOnPIDBlockLoad();
+  uint8_t *FfbOnPIDStatus();
+
+  // Handle incoming data from USB
+  void FfbOnCreateNewEffect(USB_FFBReport_CreateNewEffect_Feature_Data_t *inData);
+  void FfbOnUsbData(uint8_t *data, uint16_t len);
+  const TEffectState *GetEffectStates();
+
   volatile uint8_t devicePaused;
-  volatile uint64_t pauseTime;
+  volatile uint8_t deviceGain;
 
-  // variables for storing previous values
-  volatile int16_t inertiaT[NUM_AXES] = {0};
-  volatile int16_t oldSpeed[NUM_AXES] = {0};
-  volatile int16_t oldAxisPosition[NUM_AXES] = {0};
-  volatile USB_FFBReport_PIDStatus_Input_Data_t pidState = {2, 30, 0};
-  volatile USB_FFBReport_PIDBlockLoad_Feature_Data_t pidBlockLoad;
-  volatile USB_FFBReport_PIDPool_Feature_Data_t pidPoolReport;
-  volatile float deviceGain;
-
+private:
   // ffb state structures
   uint8_t GetNextFreeEffect(void);
   void StartEffect(vTEffectState *);
@@ -76,13 +74,15 @@ public:
   void SetConstantForce(USB_FFBReport_SetConstantForce_Output_Data_t *data, volatile TEffectState *effect);
   void SetRampForce(USB_FFBReport_SetRampForce_Output_Data_t *data, volatile TEffectState *effect);
 
-  // Handle incoming data from USB
-  void FfbOnCreateNewEffect(USB_FFBReport_CreateNewEffect_Feature_Data_t *inData);
-  void FfbOnUsbData(uint8_t *data, uint16_t len);
-  uint8_t *FfbOnPIDPool();
-  uint8_t *FfbOnPIDBlockLoad();
-  uint8_t *FfbOnPIDStatus();
+  vTEffectState gEffectStates[MAX_EFFECTS];
 
+  // Effect management
+  volatile uint64_t pauseTime;
+
+  // variables for storing previous values
+  volatile USB_FFBReport_PIDStatus_Input_Data_t pidState = {2, 30, 0};
+  volatile USB_FFBReport_PIDBlockLoad_Feature_Data_t pidBlockLoad;
+  volatile USB_FFBReport_PIDPool_Feature_Data_t pidPoolReport;
   // pointer to function providing current time in miliseconds
   uint64_t (*getTimeMilli)(void);
 };

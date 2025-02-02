@@ -91,8 +91,8 @@ typedef struct
   uint8_t effectBlockIndex;     // 1..40
   uint8_t parameterBlockOffset; // bits: 0..3=parameterBlockOffset, 4..5=instance1, 6..7=instance2
   int16_t cpOffset;             // -32767..32767
-  int16_t positiveCoefficient;  // 0..255
-  int16_t negativeCoefficient;  // 0..255
+  uint16_t positiveCoefficient; // 0..255
+  uint16_t negativeCoefficient; // 0..255
   uint16_t positiveSaturation;  // 0..255
   uint16_t negativeSaturation;  // 0..255
   uint16_t deadBand;            // 0..32767
@@ -200,6 +200,11 @@ typedef struct
 // ---- effect
 
 #define USB_DURATION_INFINITE 0x7FFF
+#define USB_MAX_MAGNITUDE 255
+#define USB_MAX_GAIN 255
+#define USB_MAX_PHASE 6283
+#define USB_PI 3141
+#define USB_NORMALIZE_RAD 1000.0
 
 #define USB_EFFECT_CONSTANT 0x01
 #define USB_EFFECT_RAMP 0x02
@@ -223,7 +228,6 @@ typedef struct
 #define X_AXIS_ENABLE 0x01
 #define Y_AXIS_ENABLE 0x02
 #define DIRECTION_ENABLE 0x04
-#define NORMALIZE_DIRECTION ((float)1000)
 
 // these were needed for testing
 #define INERTIA_FORCE 0xFF
