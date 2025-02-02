@@ -29,7 +29,6 @@
 
 #include "HIDReportType.h"
 
-typedef volatile TEffectState vTEffectState;
 class FfbReportHandler
 {
 public:
@@ -45,19 +44,19 @@ public:
   void FfbOnUsbData(uint8_t *data, uint16_t len);
   const TEffectState *GetEffectStates();
 
-  volatile uint8_t devicePaused;
-  volatile uint8_t deviceGain;
+  uint8_t devicePaused;
+  uint8_t deviceGain;
 
 private:
   // ffb state structures
   uint8_t GetNextFreeEffect(void);
-  void StartEffect(vTEffectState *);
-  void StopEffect(vTEffectState *);
+  void StartEffect(TEffectState *);
+  void StopEffect(TEffectState *);
   void StopAllEffects(void);
   void FreeEffect(uint8_t id);
   void FreeAllEffects(void);
 
-  vTEffectState *GetEffect(uint8_t id);
+  TEffectState *GetEffect(uint8_t id);
 
   // handle output report
   void FfbHandle_EffectOperation(USB_FFBReport_EffectOperation_Output_Data_t *data);
@@ -68,16 +67,16 @@ private:
   void FfbHandle_SetDownloadForceSample(USB_FFBReport_SetDownloadForceSample_Output_Data_t *data);
   void FfbHandle_SetCustomForce(USB_FFBReport_SetCustomForce_Output_Data_t *data);
   void FfbHandle_SetEffect(USB_FFBReport_SetEffect_Output_Data_t *data);
-  void SetEnvelope(USB_FFBReport_SetEnvelope_Output_Data_t *data, volatile TEffectState *effect);
-  void SetCondition(USB_FFBReport_SetCondition_Output_Data_t *data, volatile TEffectState *effect);
-  void SetPeriodic(USB_FFBReport_SetPeriodic_Output_Data_t *data, volatile TEffectState *effect);
-  void SetConstantForce(USB_FFBReport_SetConstantForce_Output_Data_t *data, volatile TEffectState *effect);
-  void SetRampForce(USB_FFBReport_SetRampForce_Output_Data_t *data, volatile TEffectState *effect);
+  void SetEnvelope(USB_FFBReport_SetEnvelope_Output_Data_t *data, TEffectState *effect);
+  void SetCondition(USB_FFBReport_SetCondition_Output_Data_t *data, TEffectState *effect);
+  void SetPeriodic(USB_FFBReport_SetPeriodic_Output_Data_t *data, TEffectState *effect);
+  void SetConstantForce(USB_FFBReport_SetConstantForce_Output_Data_t *data, TEffectState *effect);
+  void SetRampForce(USB_FFBReport_SetRampForce_Output_Data_t *data, TEffectState *effect);
 
-  vTEffectState gEffectStates[MAX_EFFECTS];
+  TEffectState gEffectStates[MAX_EFFECTS];
 
   // Effect management
-  volatile uint64_t pauseTime;
+  uint64_t pauseTime;
 
   // variables for storing previous values
   volatile USB_FFBReport_PIDStatus_Input_Data_t pidState = {2, 30, 0};

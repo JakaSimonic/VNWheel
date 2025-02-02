@@ -40,7 +40,7 @@ FfbReportHandler::~FfbReportHandler()
   FreeAllEffects();
 }
 
-vTEffectState *FfbReportHandler::GetEffect(uint8_t id)
+TEffectState *FfbReportHandler::GetEffect(uint8_t id)
 {
   if (id > 1 && id <= MAX_EFFECTS)
   {
@@ -73,7 +73,7 @@ void FfbReportHandler::StopAllEffects(void)
     StopEffect(&gEffectStates[id]);
 }
 
-void FfbReportHandler::StartEffect(vTEffectState *effectState)
+void FfbReportHandler::StartEffect(TEffectState *effectState)
 {
   effectState->state = MEFFECTSTATE_PLAYING;
   if (effectState->block.triggerButton != 0xFF)
@@ -82,7 +82,7 @@ void FfbReportHandler::StartEffect(vTEffectState *effectState)
     effectState->startTime = getTimeMilli() + effectState->block.startDelay;
 }
 
-void FfbReportHandler::StopEffect(vTEffectState *effectState)
+void FfbReportHandler::StopEffect(TEffectState *effectState)
 {
   effectState->state &= ~MEFFECTSTATE_PLAYING;
 }
@@ -106,7 +106,7 @@ void FfbReportHandler::FfbHandle_EffectOperation(USB_FFBReport_EffectOperation_O
 {
   uint8_t effectBlockIndex = data->effectBlockIndex;
   uint8_t operation = data->operation;
-  vTEffectState *effectState = GetEffect(effectBlockIndex);
+  TEffectState *effectState = GetEffect(effectBlockIndex);
   switch (operation)
   {
   case 1:
@@ -209,7 +209,7 @@ void FfbReportHandler::FfbHandle_SetDownloadForceSample(USB_FFBReport_SetDownloa
 
 void FfbReportHandler::FfbHandle_SetEffect(USB_FFBReport_SetEffect_Output_Data_t *data)
 {
-  vTEffectState *effectState = GetEffect(data->effectBlockIndex);
+  TEffectState *effectState = GetEffect(data->effectBlockIndex);
   volatile USB_FFBReport_SetEffect_Output_Data_t *block = &effectState->block;
   memcpy((void *)block, data, sizeof(USB_FFBReport_SetEffect_Output_Data_t));
 
@@ -228,13 +228,13 @@ void FfbReportHandler::FfbHandle_SetEffect(USB_FFBReport_SetEffect_Output_Data_t
   }
 }
 
-void FfbReportHandler::SetEnvelope(USB_FFBReport_SetEnvelope_Output_Data_t *data, vTEffectState *effect)
+void FfbReportHandler::SetEnvelope(USB_FFBReport_SetEnvelope_Output_Data_t *data, TEffectState *effect)
 {
   volatile USB_FFBReport_SetEnvelope_Output_Data_t *periodic = &effect->parameters[TYPE_SPECIFIC_BLOCK_OFFSET_2].envelope;
   memcpy((void *)periodic, data, sizeof(USB_FFBReport_SetEnvelope_Output_Data_t));
 }
 
-void FfbReportHandler::SetCondition(USB_FFBReport_SetCondition_Output_Data_t *data, vTEffectState *effect)
+void FfbReportHandler::SetCondition(USB_FFBReport_SetCondition_Output_Data_t *data, TEffectState *effect)
 {
   uint8_t parameterBlockOffset = data->parameterBlockOffset & 0x0F;
   if (parameterBlockOffset > NUM_AXES - 1)
@@ -243,20 +243,20 @@ void FfbReportHandler::SetCondition(USB_FFBReport_SetCondition_Output_Data_t *da
   memcpy((void *)condition, data, sizeof(USB_FFBReport_SetCondition_Output_Data_t));
 }
 
-void FfbReportHandler::SetPeriodic(USB_FFBReport_SetPeriodic_Output_Data_t *data, volatile TEffectState *effect)
+void FfbReportHandler::SetPeriodic(USB_FFBReport_SetPeriodic_Output_Data_t *data, TEffectState *effect)
 {
   volatile USB_FFBReport_SetPeriodic_Output_Data_t *periodic = &effect->parameters[TYPE_SPECIFIC_BLOCK_OFFSET_1].periodic;
   memcpy((void *)periodic, data, sizeof(USB_FFBReport_SetPeriodic_Output_Data_t));
 }
 
-void FfbReportHandler::SetConstantForce(USB_FFBReport_SetConstantForce_Output_Data_t *data, volatile TEffectState *effect)
+void FfbReportHandler::SetConstantForce(USB_FFBReport_SetConstantForce_Output_Data_t *data, TEffectState *effect)
 {
   //  ReportPrint(*effect);
   volatile USB_FFBReport_SetConstantForce_Output_Data_t *constant = &effect->parameters[TYPE_SPECIFIC_BLOCK_OFFSET_1].constant;
   memcpy((void *)constant, data, sizeof(USB_FFBReport_SetConstantForce_Output_Data_t));
 }
 
-void FfbReportHandler::SetRampForce(USB_FFBReport_SetRampForce_Output_Data_t *data, volatile TEffectState *effect)
+void FfbReportHandler::SetRampForce(USB_FFBReport_SetRampForce_Output_Data_t *data, TEffectState *effect)
 {
   volatile USB_FFBReport_SetRampForce_Output_Data_t *ramp = &effect->parameters[TYPE_SPECIFIC_BLOCK_OFFSET_1].ramp;
   memcpy((void *)ramp, data, sizeof(USB_FFBReport_SetRampForce_Output_Data_t));
