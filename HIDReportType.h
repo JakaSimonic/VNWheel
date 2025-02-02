@@ -253,7 +253,6 @@ typedef struct
 typedef struct
 {
   volatile uint8_t state; // see constants <MEffectState_*>
-  uint16_t elapsedTime;
   uint64_t startTime;
   float directionUnitVec[NUM_AXES];
 
