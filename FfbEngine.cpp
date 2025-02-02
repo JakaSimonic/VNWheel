@@ -244,14 +244,23 @@ void FfbEngine::ForceCalculator(int32_t ffbForce[NUM_AXES])
       case USB_EFFECT_TRIANGLE:
       case USB_EFFECT_SAWTOOTHDOWN:
       case USB_EFFECT_SAWTOOTHUP:
-        const USB_FFBReport_SetEnvelope_Output_Data_t &envelope = effect.parameters[TYPE_SPECIFIC_BLOCK_OFFSET_2].envelope;
-        force *= GetEnvelope(envelope, elapsedTime, duration);
+        if (effect.envelopeParameter)
+        {
+          const USB_FFBReport_SetEnvelope_Output_Data_t &envelope = effect.parameters[TYPE_SPECIFIC_BLOCK_OFFSET_2].envelope;
+          force *= GetEnvelope(envelope, elapsedTime, duration);
+        }
         force *= gain;
         force /= USB_MAX_GAIN;
         if (effect.block.enableAxis & X_AXIS_ENABLE)
+        {
+          force *= effect.directionUnitVec[0];
           forceAll[0] += force;
+        }
         if (effect.block.enableAxis & Y_AXIS_ENABLE)
+        {
+          force *= effect.directionUnitVec[1];
           forceAll[1] += force;
+        }
       case USB_EFFECT_SPRING:
       case USB_EFFECT_DAMPER:
       case USB_EFFECT_INERTIA:

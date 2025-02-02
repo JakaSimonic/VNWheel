@@ -247,6 +247,7 @@ void FfbReportHandler::SetPeriodic(USB_FFBReport_SetPeriodic_Output_Data_t *data
 {
   volatile USB_FFBReport_SetPeriodic_Output_Data_t *periodic = &effect->parameters[TYPE_SPECIFIC_BLOCK_OFFSET_1].periodic;
   memcpy((void *)periodic, data, sizeof(USB_FFBReport_SetPeriodic_Output_Data_t));
+  effect->envelopeParameter = true;
 }
 
 void FfbReportHandler::SetConstantForce(USB_FFBReport_SetConstantForce_Output_Data_t *data, TEffectState *effect)

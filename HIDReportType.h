@@ -102,25 +102,25 @@ typedef struct
 {                           // FFB: Set Periodic Output Report
   uint8_t reportId;         // =4
   uint8_t effectBlockIndex; // 1..40
-  uint16_t magnitude;
-  int16_t offset;  //-255..255
-  uint16_t phase;  // 0..6283 (=0..359, exp-2)
-  uint16_t period; // 0..32767 ms
+  uint16_t magnitude;       // 0..255
+  int16_t offset;           // 0..255
+  uint16_t phase;           // 0..6283 (=0..359, exp-2)
+  uint16_t period;          // 0..32767 ms
 } USB_FFBReport_SetPeriodic_Output_Data_t;
 
 typedef struct
 {                           // FFB: Set ConstantForce Output Report
   uint8_t reportId;         // =5
   uint8_t effectBlockIndex; // 1..40
-  int16_t magnitude;        // -255..255
+  int16_t magnitude;        // 0..255
 } USB_FFBReport_SetConstantForce_Output_Data_t;
 
 typedef struct
 {                           // FFB: Set RampForce Output Report
   uint8_t reportId;         // =6
   uint8_t effectBlockIndex; // 1..40
-  int16_t startMagnitude;   // -255..255
-  int16_t endMagnitude;     // -255..255
+  int16_t startMagnitude;   // 0..255
+  int16_t endMagnitude;     // 0..255
 } USB_FFBReport_SetRampForce_Output_Data_t;
 
 typedef struct
@@ -255,6 +255,7 @@ typedef struct
   volatile uint8_t state; // see constants <MEffectState_*>
   uint64_t startTime;
   float directionUnitVec[NUM_AXES];
+  bool envelopeParameter = false;
 
   USB_FFBReport_SetEffect_Output_Data_t block;
   TEffectParameter parameters[NUM_AXES];
