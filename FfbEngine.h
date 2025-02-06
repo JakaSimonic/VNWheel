@@ -26,7 +26,6 @@
 #include "FfbReportHandler.h"
 #include "wheelConfig.h"
 #include "UserInput.h"
-// #include <filters.h>
 
 #define WHEEL_SAMPLE_RATE_MS 10
 #define WHEEL_RANGE 0x03B7
@@ -42,7 +41,7 @@
 class FfbEngine
 {
 public:
-  FfbEngine(FfbReportHandler *reporthandler, uint64_t (*)(void));
+  FfbEngine(FfbReportHandler *reporthandler, uint64_t (*)(void), int32_t (*)(float, int8_t, int8_t) = nullptr);
   ~FfbEngine();
   void SetGain(WheelConfig wheelconfig);
   FfbReportHandler *ffbReportHandler;
@@ -59,6 +58,7 @@ public:
 
 private:
   uint64_t (*getTimeMilli)(void);
+  int32_t (*forceHook)(float forceValue, int8_t effect, int8_t axisIndex);
 
   uint8_t constantGainConfig;
   uint8_t rampGainConfig;

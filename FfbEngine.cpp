@@ -26,7 +26,12 @@
 #include "HIDReportType.h"
 #include "debug.h"
 
-FfbEngine::FfbEngine(FfbReportHandler *reporthandler, uint64_t (*pTime)(void)) : getTimeMilli{pTime}, ffbReportHandler{reporthandler}
+FfbEngine::FfbEngine(
+    FfbReportHandler *reporthandler,
+    uint64_t (*pTime)(void),
+    int32_t (*fHook)(float, int8_t, int8_t)) : getTimeMilli{pTime},
+                                               ffbReportHandler{reporthandler},
+                                               forceHook{fHook}
 {
 }
 
@@ -128,6 +133,7 @@ int32_t ApplyCondition(int32_t metric, uint8_t gain, const USB_FFBReport_SetCond
   uint16_t positiveSaturation = condition.positiveSaturation;
   uint16_t positiveCoefficient = condition.positiveCoefficient;
   int32_t tempForce = 0;
+
   if (metric < (cpOffset - deadBand))
   {
     tempForce = (metric - (cpOffset - deadBand)) * negativeCoefficient;
@@ -136,7 +142,7 @@ int32_t ApplyCondition(int32_t metric, uint8_t gain, const USB_FFBReport_SetCond
   {
     tempForce = (metric - (cpOffset + deadBand)) * positiveCoefficient;
   }
-  return tempForce;
+  return -tempForce;
 }
 
 void FfbEngine::ConditionForceCalculator(const TEffectState &effect, const int32_t metric[NUM_AXES], float outForce[NUM_AXES])
@@ -201,7 +207,7 @@ void FfbEngine::ForceCalculator(int32_t ffbForce[NUM_AXES])
       uint8_t gain = effect.block.gain;
 
       float force = 0;
-      float forceDirection[NUM_AXES] = {0};
+      float forceCondition[NUM_AXES] = {0};
 
       switch (effectType)
       {
@@ -219,16 +225,14 @@ void FfbEngine::ForceCalculator(int32_t ffbForce[NUM_AXES])
         force = PeriodiceForceCalculator(effectType, effect, elapsedTime);
         break;
       case USB_EFFECT_SPRING:
-        ConditionForceCalculator(effect, axisPosition.metrics[UserInput::position], forceDirection);
-        break;
-      case USB_EFFECT_DAMPER:
-        ConditionForceCalculator(effect, axisPosition.metrics[UserInput::speed], forceDirection);
+        ConditionForceCalculator(effect, axisPosition.GetMetric(UserInput::position), forceCondition);
         break;
       case USB_EFFECT_INERTIA:
-        ConditionForceCalculator(effect, axisPosition.metrics[UserInput::acceleration], forceDirection);
+      case USB_EFFECT_DAMPER:
+        ConditionForceCalculator(effect, axisPosition.GetMetric(UserInput::speed), forceCondition);
         break;
       case USB_EFFECT_FRICTION:
-        ConditionForceCalculator(effect, axisPosition.metrics[UserInput::acceleration], forceDirection);
+        ConditionForceCalculator(effect, axisPosition.GetMetric(UserInput::acceleration), forceCondition);
         break;
       case USB_EFFECT_CUSTOM:
       default:
@@ -251,27 +255,37 @@ void FfbEngine::ForceCalculator(int32_t ffbForce[NUM_AXES])
         }
         force *= gain;
         force /= USB_MAX_GAIN;
-        if (effect.block.enableAxis & X_AXIS_ENABLE)
-        {
-          force *= effect.directionUnitVec[0];
-          forceAll[0] += force;
-        }
-        if (effect.block.enableAxis & Y_AXIS_ENABLE)
-        {
-          force *= effect.directionUnitVec[1];
-          forceAll[1] += force;
-        }
-      case USB_EFFECT_SPRING:
-      case USB_EFFECT_DAMPER:
-      case USB_EFFECT_INERTIA:
-      case USB_EFFECT_FRICTION:
         for (uint8_t i = 0; i < NUM_AXES; ++i)
         {
-          forceDirection[i] *= gain;
-          forceDirection[i] /= USB_MAX_GAIN;
+          if (effect.block.enableAxis >> i & 0x01)
+          {
+            force *= effect.directionUnitVec[i];
 
-          forceAll[i] += forceDirection[i];
+            if (forceHook != nullptr)
+              force = forceHook(force, effectType, i);
+
+            forceAll[i] += force;
+          }
         }
+        break;
+      case USB_EFFECT_SPRING:
+      case USB_EFFECT_FRICTION:
+      case USB_EFFECT_DAMPER:
+      case USB_EFFECT_INERTIA:
+        for (uint8_t i = 0; i < NUM_AXES; ++i)
+        {
+          forceCondition[i] *= gain;
+          forceCondition[i] /= USB_MAX_GAIN;
+
+          if (effectType == USB_EFFECT_INERTIA)
+            forceCondition[i] *= -1;
+
+          if (forceHook != nullptr)
+            force = forceHook(force, effectType, i);
+
+          forceAll[i] += forceCondition[i];
+        }
+        break;
       case USB_EFFECT_CUSTOM:
       default:
         continue;
@@ -308,13 +322,13 @@ float FfbEngine::GetEnvelope(const USB_FFBReport_SetEnvelope_Output_Data_t &enve
   }
   else
   {
-    return 1; // USB_MAX_MAGNITUDE / USB_MAX_MAGNITUDE
+    return 1.0; // USB_MAX_MAGNITUDE / USB_MAX_MAGNITUDE
   }
 
-  return envelopeValue / USB_MAX_MAGNITUDE;
+  return (float)envelopeValue / USB_MAX_MAGNITUDE;
 }
 
-bool IsTriggerEffectPlaying(TEffectState &effect, uint8_t &buttonState, uint64_t time)
+bool IsTriggerEffectPlaying(TEffectState &effect, uint8_t buttonState, uint64_t time)
 {
   int64_t elapsedTime = time - effect.startTime;
   uint8_t buttonIdx = effect.block.triggerButton - 1;
@@ -353,7 +367,7 @@ bool FfbEngine::IsEffectPlaying(const TEffectState &effect, uint64_t time)
 
   if (effect.block.triggerButton != 0xFF)
   {
-    return IsTriggerEffectPlaying(const_cast<TEffectState &>(effect), axisPosition.buttonsState, time);
+    return IsTriggerEffectPlaying(const_cast<TEffectState &>(effect), axisPosition.GetButtons(), time);
   }
 
   int64_t elapsedTime = time - effect.startTime;

@@ -23,10 +23,7 @@
 */
 #include "UserInput.h"
 
-UserInput::UserInput() : positionFilter{nullptr}, speedFilter{nullptr}, accelerationFilter{nullptr}
-{
-}
-UserInput::UserInput(pFilterFunc pPosF, pFilterFunc pSpeedF, pFilterFunc pAccF) : positionFilter{pPosF}, speedFilter{pSpeedF}, accelerationFilter{pAccF}
+UserInput::UserInput()
 {
 }
 
@@ -40,12 +37,30 @@ void UserInput::UpdatePosition(int32_t newPosition[NUM_AXES])
     metrics[position][i] = newPosition[i];
     metrics[speed][i] = tempSpeed;
     metrics[acceleration][i] = tempAcc;
-
-    if (positionFilter != nullptr)
-      filteredMetrics[position][i] = positionFilter(newPosition[i], i);
-    if (speedFilter != nullptr)
-      filteredMetrics[speed][i] = speedFilter(tempSpeed, i);
-    if (accelerationFilter != nullptr)
-      filteredMetrics[acceleration][i] = accelerationFilter(tempAcc, i);
   }
+}
+
+void UserInput::UpdateMetrics(int32_t newPosition[NUM_AXES], int32_t newSpeed[NUM_AXES], int32_t newAcc[NUM_AXES])
+{
+  for (uint8_t i = 0; i < NUM_AXES; ++i)
+  {
+    metrics[position][i] = newPosition[i];
+    metrics[speed][i] = newSpeed[i];
+    metrics[acceleration][i] = newAcc[i];
+  }
+}
+
+void UserInput::UpdateButtons(int8_t buttons)
+{
+  buttonsState = buttons;
+}
+
+const int32_t *UserInput::GetMetric(Metric m)
+{
+  return (const int32_t *)metrics[m];
+}
+
+uint8_t UserInput::GetButtons()
+{
+  return buttonsState;
 }

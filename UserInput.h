@@ -26,31 +26,28 @@
 
 #include <stdint.h>
 #include "HIDReportType.h"
-typedef int32_t (*pFilterFunc)(int32_t, uint8_t);
 
 class UserInput
 {
 public:
     UserInput();
-    UserInput(pFilterFunc, pFilterFunc, pFilterFunc);
     void UpdatePosition(int32_t[NUM_AXES]);
-    void UpdateButtons(int32_t[NUM_AXES]);
+    void UpdateMetrics(int32_t[NUM_AXES], int32_t[NUM_AXES], int32_t[NUM_AXES]);
+    void UpdateButtons(int8_t);
+    uint8_t GetButtons();
 
-    enum
+    enum Metric
     {
         position,
         speed,
         acceleration,
-        count
+        metricsCount
     };
-    int32_t metrics[count][NUM_AXES] = {0};
-    int32_t filteredMetrics[count][NUM_AXES] = {0};
-    uint8_t buttonsState = 0;
+    const int32_t *GetMetric(Metric);
 
 private:
-    pFilterFunc positionFilter;
-    pFilterFunc speedFilter;
-    pFilterFunc accelerationFilter;
+    int32_t metrics[metricsCount][NUM_AXES] = {0};
+    uint8_t buttonsState = 0;
 };
 
 #endif
